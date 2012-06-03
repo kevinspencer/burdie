@@ -40,4 +40,4 @@ those token values.  It does this in a couple of steps:
   and access_token_secret from twitter and store those to a file for all future
   runs.
 
-burdie stores the access tokens in ~/.accesstokens
+burdie stores the access tokens in ~/.burdie_tokens
