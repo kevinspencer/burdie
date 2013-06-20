@@ -14,15 +14,22 @@
 use Data::Dumper;
 use File::HomeDir;
 use File::Spec;
+use Getopt::Long;
 use IO::Prompt;
 use Net::Twitter;
 use strict;
 use warnings;
 
-our $VERSION = '0.01';
+our $VERSION = '0.04';
 $Data::Dumper::Indent = 1;
 
+my $DEBUG = 0;
+
 my $tweet = shift;
+
+if (length($tweet) > 140) {
+    die "Tweets can't be longer than 140 chars.\n";
+}
 
 my $tokens_file = File::Spec->catfile(File::HomeDir->my_home(), '.burdie_tokens');
 
@@ -39,7 +46,7 @@ my $consumer_key    = 'supflerNwc0EZGHugqjtSA';
 my $consumer_secret = 'nOJ5EAkNW7bG7TUEpVUD1N6AQIfnMpEWIGsaSZ9BJYM';
 
 my $nt = Net::Twitter->new(
-    traits          => ['API::REST', 'OAuth'],
+    traits          => ['API::RESTv1_1', 'OAuth'],
     consumer_key    => $consumer_key,
     consumer_secret => $consumer_secret
 );
@@ -61,8 +68,11 @@ if (! $nt->authorized()) {
 }
 
 my $result = $nt->update($tweet);
+if ($result->{id}) {
+    print "SUCCESS: post sent to Twitter, ID: $result->{id}\n";
+}
 
-print Dumper $result;
+#print Dumper $result;
 
 sub get_twitter_authorization {
     print "Visit the following URL in your browser to authorize this app:\n" .
