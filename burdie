@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# Copyright 2010-2015 Kevin Spencer <kevin@kevinspencer.org>
+# Copyright 2010-2016 Kevin Spencer <kevin@kevinspencer.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -20,11 +20,11 @@ use Net::Twitter;
 use strict;
 use warnings;
 
-our $VERSION = '0.07';
+our $VERSION = '0.08';
 $Data::Dumper::Indent = 1;
 
-my $DEBUG;
-GetOptions("debug" => \$DEBUG);
+my ($DEBUG, $upload_image);
+GetOptions("debug" => \$DEBUG, "sendimage=s" => \$upload_image);
 
 my $tweet = shift;
 
@@ -71,8 +71,13 @@ if (! $nt->authorized()) {
     print "Looks like we're not authorized yet...\n";
     exit() if (! get_twitter_authorization());
 }
-
-my $result = $nt->update($tweet);
+my $result;
+# if we have an image to upload...
+if ($upload_image) {
+    $result = $nt->update_with_media($tweet, [$upload_image]);
+} else {
+    $result = $nt->update($tweet);
+}
 if ($result->{id}) {
     print "SUCCESS: post sent to Twitter, ID: $result->{id}\n";
 }
