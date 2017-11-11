@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# Copyright 2010-2016 Kevin Spencer <kevin@kevinspencer.org>
+# Copyright 2010-2017 Kevin Spencer <kevin@kevinspencer.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -20,7 +20,7 @@ use Net::Twitter;
 use strict;
 use warnings;
 
-our $VERSION = '0.08';
+our $VERSION = '0.09';
 $Data::Dumper::Indent = 1;
 
 my ($DEBUG, $upload_image);
@@ -31,8 +31,10 @@ my $tweet = shift;
 my $tweet_no_url;
 ($tweet_no_url = $tweet) =~ s/(http.*?:\/\/([^\s)\"](?!ttp:))+)//g;
 
-if (length($tweet_no_url) > 140) {
-    die "Tweets can't be longer than 140 chars.\n";
+# remember a more civilized time where 140 characters _was_ the norm?
+
+if (length($tweet_no_url) > 280) {
+    die "Tweets can't be longer than 280 chars.\n";
 }
 
 my $tokens_file = File::Spec->catfile(File::HomeDir->my_home(), '.burdie_tokens');
