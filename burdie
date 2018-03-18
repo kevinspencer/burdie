@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# Copyright 2010-2017 Kevin Spencer <kevin@kevinspencer.org>
+# Copyright 2010-2018 Kevin Spencer <kevin@kevinspencer.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -16,11 +16,11 @@ use File::HomeDir;
 use File::Spec;
 use Getopt::Long;
 use IO::Prompt;
-use Net::Twitter;
+use Twitter::API;
 use strict;
 use warnings;
 
-our $VERSION = '0.09';
+our $VERSION = '0.11';
 $Data::Dumper::Indent = 1;
 
 my ($DEBUG, $upload_image);
@@ -51,7 +51,7 @@ my $tokens_file = File::Spec->catfile(File::HomeDir->my_home(), '.burdie_tokens'
 my $consumer_key    = 'supflerNwc0EZGHugqjtSA';
 my $consumer_secret = 'nOJ5EAkNW7bG7TUEpVUD1N6AQIfnMpEWIGsaSZ9BJYM';
 
-my $nt = Net::Twitter->new(
+my $client = Twitter::API->new_with_traits(
     traits          => ['API::RESTv1_1', 'OAuth'],
     consumer_key    => $consumer_key,
     consumer_secret => $consumer_secret,
@@ -65,20 +65,20 @@ my $nt = Net::Twitter->new(
 #
 my($access_token, $access_token_secret) = retrieve_tokens();
 if ($access_token && $access_token_secret) {
-    $nt->access_token($access_token);
-    $nt->access_token_secret($access_token_secret);
+    $client->access_token($access_token);
+    $client->access_token_secret($access_token_secret);
 }
 
-if (! $nt->authorized()) {
+if (! $client->authorized()) {
     print "Looks like we're not authorized yet...\n";
     exit() if (! get_twitter_authorization());
 }
 my $result;
 # if we have an image to upload...
 if ($upload_image) {
-    $result = $nt->update_with_media($tweet, [$upload_image]);
+    $result = $client->update_with_media($tweet, [$upload_image]);
 } else {
-    $result = $nt->update($tweet);
+    $result = $client->update($tweet);
 }
 if ($result->{id}) {
     print "SUCCESS: post sent to Twitter, ID: $result->{id}\n";
@@ -88,7 +88,7 @@ print Dumper $result if $DEBUG;
 
 sub get_twitter_authorization {
     print "Visit the following URL in your browser to authorize this app:\n" .
-        $nt->get_authorization_url() . "\n";
+        $client->get_authorization_url() . "\n";
 
     my $pin = prompt("Once done, enter the PIN here: ");
 
@@ -100,8 +100,8 @@ sub get_twitter_authorization {
         if ($access_token && $access_token_secret) {
             print "Tokens received, storing to $tokens_file...\n";
             store_tokens($access_token, $access_token_secret);
-            $nt->access_token($access_token);
-            $nt->access_token_secret($access_token_secret);
+            $client->access_token($access_token);
+            $client->access_token_secret($access_token_secret);
             print "Done.\n";
         } else {
             print "Twitter error: did not receive access tokens.\n";
