@@ -95,7 +95,7 @@ sub get_twitter_authorization {
     eval {
         print "PIN received, contacting twitter to obtain access tokens...\n";
         my ($access_token, $access_token_secret, $user_id, $screen_name) =
-            $nt->request_access_token(verifier => $pin);
+            $client->request_access_token(verifier => $pin);
 
         if ($access_token && $access_token_secret) {
             print "Tokens received, storing to $tokens_file...\n";
