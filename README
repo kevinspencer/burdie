@@ -13,7 +13,7 @@ You'll need the following modules installed, all available from the CPAN:
 
 File::HomeDir
 IO::Prompt
-Net::Twitter
+Twitter::API
 
 Usage
 -----

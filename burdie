@@ -22,7 +22,7 @@ use Twitter::API::Util 'is_twitter_api_error';
 use strict;
 use warnings;
 
-our $VERSION = '0.11';
+our $VERSION = '0.12';
 $Data::Dumper::Indent = 1;
 
 my ($DEBUG, $upload_image);
