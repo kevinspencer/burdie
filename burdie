@@ -22,7 +22,7 @@ use Twitter::API::Util 'is_twitter_api_error';
 use strict;
 use warnings;
 
-our $VERSION = '0.13';
+our $VERSION = '0.14';
 $Data::Dumper::Indent = 1;
 
 my ($DEBUG, $upload_image);
@@ -78,16 +78,13 @@ try {
 catch {
     die $_ unless is_twitter_api_error($_);
  
-    # The error object includes plenty of information
     print $_->http_request->as_string;
     print $_->http_response->as_string;
     print 'No use retrying right away' if $_->is_permanent_error;
     if ( $_->is_token_error ) {
         print "There's something wrong with this token."
     }
-    if ( $_->twitter_error_code == 326 ) {
-        print "Oops! Twitter thinks you're spam bot!";
-    }
+    print $_->twitter_error_code;
 };
 
 my $result;
@@ -113,7 +110,7 @@ sub get_twitter_authorization {
 
     my $pin = prompt("Once done, enter the PIN here: ");
 
-    eval {
+    try {
         print "PIN received, contacting twitter to obtain access tokens...\n";
         my $access = $client->oauth_access_token({
             token        => $request->{oauth_token},
@@ -132,11 +129,13 @@ sub get_twitter_authorization {
             print "Twitter error: did not receive access tokens.\n";
             return;
         }
-    };
+    }
+    catch {
+        die $_ unless is_twitter_api_error($_);
 
-    if (my $err = $@) {
-        print "Twitter error: ", $err->error(), "\n";
-        return;
+        print $_->http_request->as_string;
+        print $_->http_response->as_string;
+        print $_->twitter_error_code;
     }
 }
 
