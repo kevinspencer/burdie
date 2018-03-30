@@ -22,7 +22,7 @@ use Twitter::API::Util 'is_twitter_api_error';
 use strict;
 use warnings;
 
-our $VERSION = '0.12';
+our $VERSION = '0.13';
 $Data::Dumper::Indent = 1;
 
 my ($DEBUG, $upload_image);
@@ -53,6 +53,12 @@ my $tokens_file = File::Spec->catfile(File::HomeDir->my_home(), '.burdie_tokens'
 my $consumer_key    = 'supflerNwc0EZGHugqjtSA';
 my $consumer_secret = 'nOJ5EAkNW7bG7TUEpVUD1N6AQIfnMpEWIGsaSZ9BJYM';
 
+my $client = Twitter::API->new_with_traits(
+    traits              => [ qw/Migration ApiMethods RetryOnError/ ],
+    consumer_key        => $consumer_key,
+    consumer_secret     => $consumer_secret,
+);
+
 #
 # access_token and access_token_secret are given on a per-user basis by twitter
 # once the user has authorized burdie access to their account.  if we've been
@@ -60,18 +66,11 @@ my $consumer_secret = 'nOJ5EAkNW7bG7TUEpVUD1N6AQIfnMpEWIGsaSZ9BJYM';
 #
 my($access_token, $access_token_secret) = retrieve_tokens();
 if (! ($access_token && $access_token_secret)) {
-    die "Couldn't find access_token or access_token_secret\n";
+    ($access_token, $access_token_secret) = get_twitter_authorization();
 }
 
-# TODO: handle case if access tokens not found on disk.
-
-my $client = Twitter::API->new_with_traits(
-    traits              => [ qw/Migration ApiMethods RetryOnError/ ],
-    consumer_key        => $consumer_key,
-    consumer_secret     => $consumer_secret,
-    access_token        => $access_token,
-    access_token_secret => $access_token_secret,
-);
+$client->access_token($access_token);
+$client->access_token_secret($access_token_secret);
 
 try {
     my $r = $client->verify_credentials;
@@ -105,24 +104,33 @@ if ($result->{id}) {
 print Dumper $result if $DEBUG;
 
 sub get_twitter_authorization {
+    my $request = $client->oauth_request_token();
+
+    my $auth_url = $client->oauth_authorization_url({ oauth_token => $request->{oauth_token} });
+
     print "Visit the following URL in your browser to authorize this app:\n" .
-        $client->get_authorization_url() . "\n";
+        $client->oauth_authorization_url( { oauth_token => $request->{oauth_token} } ) . "\n";
 
     my $pin = prompt("Once done, enter the PIN here: ");
 
     eval {
         print "PIN received, contacting twitter to obtain access tokens...\n";
-        my ($access_token, $access_token_secret, $user_id, $screen_name) =
-            $client->request_access_token(verifier => $pin);
+        my $access = $client->oauth_access_token({
+            token        => $request->{oauth_token},
+            token_secret => $request->{oauth_token_secret},
+            verifier     => $pin
+        });
+
+        my ($access_token, $access_token_secret) = @{$access}{qw(oauth_token oauth_token_secret)};
 
         if ($access_token && $access_token_secret) {
             print "Tokens received, storing to $tokens_file...\n";
             store_tokens($access_token, $access_token_secret);
-            $client->access_token($access_token);
-            $client->access_token_secret($access_token_secret);
             print "Done.\n";
+            return ($access_token, $access_token_secret);
         } else {
             print "Twitter error: did not receive access tokens.\n";
+            return;
         }
     };
 
@@ -130,7 +138,6 @@ sub get_twitter_authorization {
         print "Twitter error: ", $err->error(), "\n";
         return;
     }
-    return 1;
 }
 
 sub retrieve_tokens {
