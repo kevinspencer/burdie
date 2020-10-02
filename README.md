@@ -9,13 +9,13 @@ Copy burdie to a directory of your choice.
 
 You'll need the following modules installed, all available from the CPAN:
 
-File::HomeDir
+```File::HomeDir
 IO::Prompt
-Twitter::API
+Twitter::API```
 
 ### Usage
 
-```./burdie "you know the other day I ate some really rather nice burritos"
+`./burdie "you know the other day I ate some really rather nice burritos"`
 
 ### Configuration & OAuth
 
