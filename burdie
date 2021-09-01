@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# Copyright 2010-2018 Kevin Spencer <kevin@kevinspencer.org>
+# Copyright 2010-2021 Kevin Spencer <kevin@kevinspencer.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -12,6 +12,7 @@
 ################################################################################
 
 use Data::Dumper;
+use Encode;
 use File::HomeDir;
 use File::Spec;
 use Getopt::Long;
@@ -22,13 +23,17 @@ use Twitter::API::Util 'is_twitter_api_error';
 use strict;
 use warnings;
 
-our $VERSION = '0.14';
+our $VERSION = '0.15';
 $Data::Dumper::Indent = 1;
 
 my ($DEBUG, $upload_image);
 GetOptions("debug" => \$DEBUG, "sendimage=s" => \$upload_image);
 
 my $tweet = shift;
+
+# https://web.archive.org/web/20130806225621/http://blog.zois.co.uk/2012/07/twitter-perl-and-utf-8/
+
+$tweet = decode('utf-8', $tweet);
 
 my $tweet_no_url;
 ($tweet_no_url = $tweet) =~ s/(http.*?:\/\/([^\s)\"](?!ttp:))+)//g;
